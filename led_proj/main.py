@@ -7,9 +7,10 @@ import time
 from secrets import secrets
 import socket
 from main2 import allOfIt
+import gc
 
 # Set country to avoid possible errors
-rp2.country('DE')
+rp2.country('US')
 
 wlan = network.WLAN(network.STA_IF)
 wlan.active(True)
@@ -28,7 +29,7 @@ print('mac = ' + mac)
 # Load login data from different file for safety reasons
 ssid = secrets['ssid']
 pw = secrets['pw']
-
+print("gc free ", gc.mem_free())
 wlan.connect(ssid, pw)
 
 # Wait for connection with 10 second timeout
@@ -99,6 +100,7 @@ while True:
         
         r = str(r)
         print("r: ",r)
+        print("gc free2 ", gc.mem_free())
         led_on = r.find('?led=on')
         led_off = r.find('?led=off')
         print('led_on = ', led_on)
