@@ -83,7 +83,7 @@ addr = socket.getaddrinfo('0.0.0.0', 80)[0][-1]
 s = socket.socket()
 s.close()
 s = socket.socket()
-# s.setsockopt(s.SOL_SOCKET, s.SO_REUSEADDR, 1)
+s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 s.bind(addr)
 s.listen(1)
 
@@ -115,10 +115,16 @@ while True:
             allOfIt(0)
             led.value(0)
             # Make GET request
-            # request = requests.get('http://www.google.com')
-            # print("g:",request.content)
-            # request.close()
-            
+            data = {
+              "current_sum": 0,
+              "dealer_card": 0,
+              "usable_ace": 0
+            }
+            headers = {'Content-Type': 'application/json'}
+            request = requests.post('http://bvme-blackjack.azurewebsites.net/v1/prediction', json=data, headers=headers)
+            print("g:",request.text)
+            request.close()
+#             
         response = get_html('index.html')
         cl.send('HTTP/1.0 200 OK\r\nContent-type: text/html\r\n\r\n')
         cl.send(response)
