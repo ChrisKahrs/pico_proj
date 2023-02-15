@@ -8,6 +8,7 @@ from secrets import secrets
 import socket
 from main2 import allOfIt
 import gc
+import json
 
 # Set country to avoid possible errors
 rp2.country('US')
@@ -122,7 +123,7 @@ while True:
             }
             headers = {'Content-Type': 'application/json'}
             request = requests.post('http://bvme-blackjack.azurewebsites.net/v1/prediction', json=data, headers=headers)
-            print("g:",request.text)
+            print("g:",json.loads(request.text)["command"])
             request.close()
 #             
         response = get_html('index.html')
