@@ -87,7 +87,7 @@ def update(tick):
         if len(g.players) > 0:
             delta = time.ticks_diff(time.ticks_us(), g.start_time)
             if delta > 1000000:
-                new_time = round(delta/1000000,2)
+                new_time = round(delta/1000000)
                 g.players[g.current_player].update_time(new_time)
                 print(f"gc free {gc.mem_free()}, new_time: {new_time:02f}" )
                 g.start_time = time.ticks_us()
@@ -159,7 +159,10 @@ def draw(tick):
             str_text = ""
             if i.name == "PAUSE":
                 str_text = "PAUSE: "
-            str_text += str(i.time_counter)
+            hour = math.floor(i.time_counter/3600)
+            min = math.floor((i.time_counter - (hour *3600)) /60)
+            sec = i.time_counter - (min * 60) - (hour * 3600)
+            str_text += " {0:01}:{1:02}:{2:02}".format(hour, min, sec)
             text(str_text, 20, y_down+4)
             
             pen(15,15,15)
@@ -170,6 +173,11 @@ def draw(tick):
         
             if i.selected_order:
                 text(str(i.selected_order), x_over+4,y_down+4)
+            
+            if i.screen_order == g.current_player:
+                if tick % 10 == 0:
+                    pen(i.rgb[0],i.rgb[1],i.rgb[2])
+                    frect(x_over,y_down,100,15)
                 
             y_down += 15
 

@@ -87,11 +87,9 @@ def update(tick):
         if len(g.players) > 0:
             delta = time.ticks_diff(time.ticks_us(), g.start_time)
             if delta > 1000000:
-                new_time = round(delta/1000000,2)
+                new_time = delta/1000000
                 g.players[g.current_player].update_time(new_time)
-                print(f"gc free {gc.mem_free()}, new_time: {new_time:02f}" )
                 g.start_time = time.ticks_us()
-
 
 def draw(tick):
     pen(0, 0, 0)
@@ -101,7 +99,7 @@ def draw(tick):
     
     if g.page == 0:
         pen(12,12,12)
-        t = ("This is the first page of instructions\n\nBattery: " + str(battery()) + "%\n\nFree Memory: " + str(math.floor(gc.mem_free()/1000)) + "kb")
+        t = ("\\penffff-- Time Totum --\\pencccc\n\nClick right to select order of players.  'A' to add player.  Then right again to start game timer.  Enjoy!!\n\nBattery: " + str(battery()) + "%\n\nFree Memory: " + str(math.floor(gc.mem_free()/1000)) + "kb")
         text(t, 5,5,100)
         pen(15,15,15)
         fpoly((115,55),(115,65),(120,60))
@@ -127,8 +125,8 @@ def draw(tick):
                 text(str(i.selected_order), x_over+4,y_down+4)
                 
             if i.screen_order == g.cursor:
-                if tick % 10 == 0:
-                    pen(8,8,8)
+                if tick % 5 == 0:
+                    pen(1,1,1)
                     rect(x_over+3,y_down+3,8,8)
             y_down += 15
 
@@ -141,7 +139,7 @@ def draw(tick):
     
     if g.page == 2:
         pen(12,12,12)
-        t = "Press...\n\nY to Reset Players Colors.\n\nRIGHT to Resume. \n\nX to \\penffffStart Fresh!"
+        t = "Press...\n\nY to Reset Players.\n\nA to add player.\n\nUP/DOWN select player\n\nX to \\penffffStart!"
         text(t,15,10,100)
         pen(11,11,11)
         fpoly((115,55),(115,65),(120,60))
@@ -150,7 +148,10 @@ def draw(tick):
     if g.page == 3:    
         for i in g.players:
             pen(i.rgb[0],i.rgb[1],i.rgb[2])
-            frect(x_over, y_down, 105, 15)
+            if i.screen_order == g.current_player:
+                frect(x_over, y_down, 105, 15+15)
+            else:
+                frect(x_over, y_down, 105, 15)
             
             if i.pen_white:
                 pen(15,15,15)
@@ -159,8 +160,14 @@ def draw(tick):
             str_text = ""
             if i.name == "PAUSE":
                 str_text = "PAUSE: "
-            str_text += str(i.time_counter)
-            text(str_text, 20, y_down+4)
+            hour = math.floor(i.time_counter/3600)
+            min = math.floor((i.time_counter - (hour *3600)) /60)
+            sec = round(i.time_counter - (min * 60) - (hour * 3600))
+            str_text += " {0:01}:{1:02}:{2:02}".format(hour, min, sec)
+            if i.screen_order == g.current_player:
+                text(str_text, 20, y_down+4+7)
+            else:
+                text(str_text, 20, y_down+4)
             
             pen(15,15,15)
             frect(x_over+2,y_down+2,10,10)
@@ -170,6 +177,12 @@ def draw(tick):
         
             if i.selected_order:
                 text(str(i.selected_order), x_over+4,y_down+4)
+            
+            if i.screen_order == g.current_player:
+                if tick % 5 == 0:
+                    pen(i.rgb[0],i.rgb[1],i.rgb[2])
+                    frect(x_over,y_down,105,15+15)
+                y_down += 15        
                 
             y_down += 15
 
