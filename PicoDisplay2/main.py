@@ -22,13 +22,9 @@ def free(full=False):
   else : return ('Total:{0} Free:{1} ({2})'.format(T,F,P))
 
 from picographics import PicoGraphics, DISPLAY_PICO_DISPLAY_2, PEN_P4
-#from picographics import PicoGraphics, DISPLAY_PICO_DISPLAY, PEN_P8
-#from picographics import PicoGraphics, DISPLAY_PICO_DISPLAY, PEN_RGB332
 
 display = PicoGraphics(display=DISPLAY_PICO_DISPLAY_2, rotate=270 ,pen_type=PEN_P4)
-#display = PicoGraphics(display=DISPLAY_PICO_DISPLAY, rotate=270 ,pen_type=PEN_P8)
-#display = PicoGraphics(display=DISPLAY_PICO_DISPLAY, rotate=270, pen_type=PEN_RGB332)
-
+display.set_font("bitmap8")
 display.set_backlight(1.0)
 
 black = display.create_pen(0, 0, 0)
@@ -39,11 +35,12 @@ blue = display.create_pen(0, 0, 255)
 
 while True:
     if button_a.read(): 
+        display.set_backlight(0.5)
         display.set_pen(red)
         display.clear()
         display.set_pen(black)
         #display.text("Button A Pressed", 10, 10, 240, 6)   # landscape
-        display.text("Button A Pressed", 2, 10, 135, 3)    # potrait 
+        display.text("Button A Pressed", 2, 10, 135, 4)    # potrait 
         display.update()
         led.set_rgb(255, 0, 0)
         print("Free RAM: ",free(True))
@@ -83,3 +80,4 @@ while True:
         time.sleep(1.0)
         display.clear()
         display.update()
+        display.set_backlight(0.1)
