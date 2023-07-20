@@ -3,6 +3,7 @@ import time
 # from pimoroni_bus import SPIBus
 from pimoroni import Button
 from pimoroni import RGBLED
+from picographics import PicoGraphics, DISPLAY_PICO_DISPLAY_2, PEN_P4
 import gc
 
 button_a = Button(12)
@@ -19,9 +20,9 @@ class g:
     players = []
     colors = []
 
-g.display = display = PicoGraphics(display=DISPLAY_PICO_DISPLAY_2 ,pen_type=PEN_P4) #rotate= 90
+display = PicoGraphics(display=DISPLAY_PICO_DISPLAY_2 ,pen_type=PEN_P4) #rotate= 90
 display.set_font("bitmap8")
-display.set_backlight(1.0)
+display.set_backlight(0.8)
 screen_width, screen_height = display.get_bounds()
 
 def free(full=False):
@@ -32,12 +33,6 @@ def free(full=False):
   P = '{0:.2f}%'.format(F/T*100)
   if not full: return P
   else : return ('Total:{0} Free:{1} ({2})'.format(T,F,P))
-
-from picographics import PicoGraphics, DISPLAY_PICO_DISPLAY_2, PEN_P4
-
-display = PicoGraphics(display=DISPLAY_PICO_DISPLAY_2 ,pen_type=PEN_P4) #rotate= 90
-display.set_font("bitmap8")
-display.set_backlight(1.0)
 
 colors = {"red" :{"rgb": (255, 0, 0), "pen":display.create_pen(255, 0, 0) },
         "yellow" :{"rgb": (255, 255, 0), "pen":display.create_pen(255, 255, 0)},
@@ -78,6 +73,12 @@ while True:
     time.sleep(0.1)
     if button_a.read(): 
         print("Free RAM: ",free(True))
+        print('\u2713')
+        # print(u'\N{check mark}')
+        display.set_backlight(0.8)
+    if button_b.read(): 
+        print("Free RAM: ",free(True))
+        display.set_backlight(0.1)
     display.update()
 
 """
