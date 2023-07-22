@@ -4,7 +4,9 @@ import time
 from pimoroni import Button
 from pimoroni import RGBLED
 from picographics import PicoGraphics, DISPLAY_PICO_DISPLAY_2, PEN_P4
+from neopixel import NeoPixel
 import gc
+from machine import Pin
 
 button_a = Button(12)
 button_b = Button(13)
@@ -79,6 +81,29 @@ while True:
     if button_b.read(): 
         print("Free RAM: ",free(True))
         display.set_backlight(0.1)
+    if button_x.read():
+
+
+        pin = Pin(2, Pin.OUT)   # set GPIO8 to output to drive NeoPixels
+        np = NeoPixel(pin, 10)   # create NeoPixel driver for 8 pixels
+        np[1] = (255, 0, 0) # set the first pixel to white
+        np.write()
+    if button_y.read():
+
+
+        pin = Pin(2, Pin.OUT)   # set GPIO8 to output to drive NeoPixels
+        np = NeoPixel(pin, 10)   # create NeoPixel driver for 8 pixels
+        np[1] = (0, 255, 0) # set the first pixel to white
+        np.write() 
+        # numpix = 10
+        # strip = Neopixel(numpix, 0, 2pi8, "RGB")
+
+        # delay = 0.15
+        # strip.brightness(2)
+
+        # strip.set_pixel(0,(50,255,0))
+
+        # strip.show()
     display.update()
 
 """
