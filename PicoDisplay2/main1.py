@@ -1,6 +1,4 @@
 import time
-# import picographics
-# from pimoroni_bus import SPIBus
 from pimoroni import Button
 from pimoroni import RGBLED
 from picographics import PicoGraphics, DISPLAY_PICO_DISPLAY_2, PEN_P4
@@ -12,99 +10,104 @@ button_a = Button(12)
 button_b = Button(13)
 button_x = Button(14)
 button_y = Button(15)
-
+button_next = Button(18, Pin.IN, Pin.PULL_UP)
+# button GP02 on neopixel
+# waveshare ups gp6,7 
+# open? 0,1,3,4,5,9,10,11,22,26,27,28 
 led = RGBLED(6, 7, 8)
+# button GP16-21 g.display
 
 class g:
-    display = 0
+    current_screen = 0 # splash
+    current_player = 0 # pause
+    display = None
+    neopixel_pin = 2
+    neopixel_strip = None
+    neopixel_brightness = 0.5
     screen_width = 0
     screen_height = 0
+    led_count = 10
     players = []
     colors = []
 
-display = PicoGraphics(display=DISPLAY_PICO_DISPLAY_2 ,pen_type=PEN_P4) #rotate= 90
-display.set_font("bitmap8")
-display.set_backlight(0.8)
-screen_width, screen_height = display.get_bounds()
-
 def free(full=False):
-  gc.collect()
-  F = gc.mem_free()
-  A = gc.mem_alloc()
-  T = F+A
-  P = '{0:.2f}%'.format(F/T*100)
-  if not full: return P
-  else : return ('Total:{0} Free:{1} ({2})'.format(T,F,P))
+    gc.collect()
+    F = gc.mem_free()
+    A = gc.mem_alloc()
+    T = F+A
+    P = '{0:.2f}%'.format(F/T*100)
+    if not full: return P
+    else : return ('Total:{0} Free:{1} ({2})'.format(T,F,P))
 
-colors = {"red" :{"rgb": (255, 0, 0), "pen":display.create_pen(255, 0, 0) },
-        "yellow" :{"rgb": (255, 255, 0), "pen":display.create_pen(255, 255, 0)},
-        "green" :{"rgb": (0, 255, 0), "pen":display.create_pen(0, 255, 0)},
-        "blue" :{"rgb": (0, 0, 255), "pen":display.create_pen(0, 0, 255)},
-        "black" :{"rgb": (0, 0, 0), "pen":display.create_pen(0, 0, 0)},
-        "white" :{"rgb": (255, 255, 255), "pen":display.create_pen(255, 255, 255)},
-        "purple" :{"rgb": (255, 0, 255), "pen":display.create_pen(255, 0, 255)},
-        "pink" :{"rgb": (255, 192, 203), "pen":display.create_pen(255, 192, 203)},
-        "lime" :{"rgb": (0, 255, 255), "pen":display.create_pen(0, 255, 255)},
-        "orange" :{"rgb": (255, 165, 0), "pen":display.create_pen(255, 165, 0)},
-        "grey" :{"rgb": (128, 128, 128), "pen":display.create_pen(128, 128, 128)},
-        "cyan" :{"rgb": (0, 255, 255), "pen":display.create_pen(0, 255, 255)}}
+def main():
+    pin = Pin(g.neopixel_pin, Pin.OUT) 
+    g.neopixel_strip = NeoPixel(pin, g.led_count)
+    # ? g.neopixel_strip.brightness(g.neopixel_brightness)
+    g.display = PicoGraphics(display=DISPLAY_PICO_DISPLAY_2 ,pen_type=PEN_P4) #rotate= 90
+    g.display.set_font("bitmap8")
+    g.display.set_backlight(0.8)
+    g.screen_width, g.screen_height = g.display.get_bounds()
 
-players = [{"name":"P1", "total_time":0, "start_time": 0, "bg_color": colors["red"], "fg_color": colors["black"], "turns": [(0,0)], "position" : 0},
-            {"name":"P2", "total_time":0, "start_time": 0, "bg_color": colors["yellow"], "fg_color": colors["black"], "turns": [(0,0)], "position" : 1},
-            {"name":"P3", "total_time":0, "start_time": 0, "bg_color": colors["green"], "fg_color": colors["black"], "turns": [(0,0)], "position" : 2},
-            {"name":"P4", "total_time":0, "start_time": 0, "bg_color": colors["blue"], "fg_color": colors["black"], "turns": [(0,0)], "position" : 3},
-            {"name":"P5", "total_time":0, "start_time": 0, "bg_color": colors["black"], "fg_color": colors["white"], "turns": [(0,0)], "position" : 4},
-            {"name":"P6", "total_time":0, "start_time": 0, "bg_color": colors["white"], "fg_color": colors["black"], "turns": [(0,0)], "position" : 5},
-            {"name":"P7", "total_time":0, "start_time": 0, "bg_color": colors["purple"], "fg_color": colors["black"], "turns": [(0,0)], "position" : 6},
-            {"name":"P8", "total_time":0, "start_time": 0, "bg_color": colors["pink"], "fg_color": colors["black"], "turns": [(0,0)], "position" : 7},
-            {"name":"P9", "total_time":0, "start_time": 0, "bg_color": colors["lime"], "fg_color": colors["black"], "turns": [(0,0)], "position" : 8}]
+    colors = {"red" :{"rgb": (255, 0, 0), "pen":g.display.create_pen(255, 0, 0) },
+            "yellow" :{"rgb": (255, 255, 0), "pen":g.display.create_pen(255, 255, 0)},
+            "green" :{"rgb": (0, 255, 0), "pen":g.display.create_pen(0, 255, 0)},
+            "blue" :{"rgb": (0, 0, 255), "pen":g.display.create_pen(0, 0, 255)},
+            "black" :{"rgb": (0, 0, 0), "pen":g.display.create_pen(0, 0, 0)},
+            "white" :{"rgb": (255, 255, 255), "pen":g.display.create_pen(255, 255, 255)},
+            "purple" :{"rgb": (255, 0, 255), "pen":g.display.create_pen(255, 0, 255)},
+            "pink" :{"rgb": (255, 192, 203), "pen":g.display.create_pen(255, 192, 203)},
+            "lime" :{"rgb": (0, 255, 255), "pen":g.display.create_pen(0, 255, 255)},
+            "orange" :{"rgb": (255, 165, 0), "pen":g.display.create_pen(255, 165, 0)},
+            "grey" :{"rgb": (128, 128, 128), "pen":g.display.create_pen(128, 128, 128)},
+            "cyan" :{"rgb": (0, 255, 255), "pen":g.display.create_pen(0, 255, 255)}}
 
-while True:
-    display.clear()
-    display.set_pen(colors["black"]["pen"])
-    height = 10
-    width = 150
-    for player in players:
-        display.set_pen(player["bg_color"]["pen"])
-        display.rectangle(0, height, width, 30)
+    players = [{"name":"P1", "total_time":0, "start_time": 0, "bg_color": colors["red"], "fg_color": colors["black"], "turns": [(0,0)], "position" : 0},
+                {"name":"P2", "total_time":0, "start_time": 0, "bg_color": colors["yellow"], "fg_color": colors["black"], "turns": [(0,0)], "position" : 1},
+                {"name":"P3", "total_time":0, "start_time": 0, "bg_color": colors["green"], "fg_color": colors["black"], "turns": [(0,0)], "position" : 2},
+                {"name":"P4", "total_time":0, "start_time": 0, "bg_color": colors["blue"], "fg_color": colors["black"], "turns": [(0,0)], "position" : 3},
+                {"name":"P5", "total_time":0, "start_time": 0, "bg_color": colors["black"], "fg_color": colors["white"], "turns": [(0,0)], "position" : 4},
+                {"name":"P6", "total_time":0, "start_time": 0, "bg_color": colors["white"], "fg_color": colors["black"], "turns": [(0,0)], "position" : 5},
+                {"name":"P7", "total_time":0, "start_time": 0, "bg_color": colors["purple"], "fg_color": colors["black"], "turns": [(0,0)], "position" : 6},
+                {"name":"P8", "total_time":0, "start_time": 0, "bg_color": colors["pink"], "fg_color": colors["black"], "turns": [(0,0)], "position" : 7},
+                {"name":"P9", "total_time":0, "start_time": 0, "bg_color": colors["lime"], "fg_color": colors["black"], "turns": [(0,0)], "position" : 8}]
 
-        display.set_pen(player["fg_color"]["pen"])
-        display.text(player["name"], 5, height+5, 100, scale = 3)
-        height += 40
-        led.set_rgb(*colors["black"]["rgb"]) # and led light string
-    time.sleep(0.1)
-    if button_a.read(): 
-        print("Free RAM: ",free(True))
-        print('\u2713')
-        # print(u'\N{check mark}')
-        display.set_backlight(0.8)
-    if button_b.read(): 
-        print("Free RAM: ",free(True))
-        display.set_backlight(0.1)
-    if button_x.read():
+    while True:
+        g.display.clear()
+        g.display.set_pen(colors["black"]["pen"])
+        height = 10
+        width = 150
+        for player in players:
+            g.display.set_pen(player["bg_color"]["pen"])
+            g.display.rectangle(0, height, width, 30)
 
+            g.display.set_pen(player["fg_color"]["pen"])
+            g.display.text(player["name"], 5, height+5, 100, scale = 3)
+            height += 40
+        led.set_rgb(*player["bg_color"]["rgb"]) # and led light string
+        time.sleep(0.1)
+        if button_next.read():
+            print("next")
+        if button_a.read(): 
+            print("Free RAM: ",free(True))
+            print('\u2713')
+            # print(u'\N{check mark}')
+            g.display.set_backlight(0.8)
+        if button_b.read(): 
+            print("Free RAM: ",free(True))
+            g.display.set_backlight(0.1)
+        if button_x.read():
+            g.neopixel_strip[2] = colors["red"]["rgb"] # set the first pixel to white
+            g.neopixel_strip.write()
+        if button_y.read():
+            g.neopixel_strip[2] = colors["orange"]["rgb"] # set the first pixel to white
+            
+        g.neopixel_strip.write() 
+        g.display.update()
 
-        pin = Pin(2, Pin.OUT)   # set GPIO8 to output to drive NeoPixels
-        np = NeoPixel(pin, 10)   # create NeoPixel driver for 8 pixels
-        np[1] = (255, 0, 0) # set the first pixel to white
-        np.write()
-    if button_y.read():
+if __name__ == "__main__":
+    main()
+    
 
-
-        pin = Pin(2, Pin.OUT)   # set GPIO8 to output to drive NeoPixels
-        np = NeoPixel(pin, 10)   # create NeoPixel driver for 8 pixels
-        np[1] = (0, 255, 0) # set the first pixel to white
-        np.write() 
-        # numpix = 10
-        # strip = Neopixel(numpix, 0, 2pi8, "RGB")
-
-        # delay = 0.15
-        # strip.brightness(2)
-
-        # strip.set_pixel(0,(50,255,0))
-
-        # strip.show()
-    display.update()
 
 """
 while True:
