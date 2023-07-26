@@ -26,7 +26,7 @@ class g:
     neopixel_brightness = 0.5
     screen_width = 0
     screen_height = 0
-    led_count = 10
+    led_count = 7
     players = []
     colors = []
 
@@ -90,17 +90,18 @@ def main():
         if button_a.read(): 
             print("Free RAM: ",free(True))
             print('\u2713')
-            # print(u'\N{check mark}')
+            # print(u'\N{check mark}')show graphics?
             g.display.set_backlight(0.8)
         if button_b.read(): 
             print("Free RAM: ",free(True))
             g.display.set_backlight(0.1)
         if button_x.read():
-            g.neopixel_strip[2] = colors["red"]["rgb"] # set the first pixel to white
+            g.neopixel_strip[1] = colors["red"]["rgb"] # set the first pixel to white
             g.neopixel_strip.write()
         if button_y.read():
-            g.neopixel_strip[2] = colors["orange"]["rgb"] # set the first pixel to white
-            
+            g.neopixel_strip[5] = colors["orange"]["rgb"] # set the first pixel to white
+        
+        # check and other overlay graphics?
         g.neopixel_strip.write() 
         g.display.update()
 
