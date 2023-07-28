@@ -1,4 +1,5 @@
 # Import necessary modules
+# https://electrocredible.com/raspberry-pi-pico-w-bluetooth-ble-micropython/
 from machine import Pin 
 import bluetooth
 from ble_simple_peripheral import BLESimplePeripheral
