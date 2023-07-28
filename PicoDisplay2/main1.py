@@ -16,11 +16,17 @@ class g:
     led = None
     screen_width = 0
     screen_height = 0
-    brightness = 0.5
+    brightness = 0.2
     led_count = 7
     players = []
     colors = []
+    line = 1 
+    row_selected = 0
+    shift = 0
+    list_length = 0
+    total_lines = 6
         
+# pin layouts
 button_a = Button(12)
 button_b = Button(13)
 button_x = Button(14)
@@ -83,23 +89,32 @@ def main():
                {"name":"P9", "total_time":0, "start_time": 0, "bg_color": colors["lime"], "fg_color": colors["black"], "turns": [(0,0)], "position" : 9}]
 
     while True:
-        g.display.clear()
+
         g.display.set_pen(colors["black"]["pen"])
+        g.display.clear()
         row_height = 10
         color_height = 30
         color_width = 300
-        counter = 0
-        for player in players:
-            if counter == 2 and (time.time() % 2 == 0):
+        line = 0
+
+        
+        g.list_length = len(players) -1
+        short_list = players[g.shift:g.shift+g.total_lines]
+
+        for player in short_list:
+            if (g.row_selected == line) and (time.time() % 2 == 0):
                 g.display.set_pen(colors["white"]["pen"])
                 g.display.rectangle(0, row_height-2, color_width+12, color_height+4)
+                for i in range(g.led_count):
+                    g.neopixel_strip[i] = set_brightness(player["bg_color"]["rgb"])
+                g.led.set_rgb(*player["bg_color"]["rgb"])
             g.display.set_pen(player["bg_color"]["pen"])
             g.display.rectangle(5, row_height, color_width, color_height)
 
             g.display.set_pen(player["fg_color"]["pen"])
             g.display.text(player["name"], 5, row_height+5, 100, scale = 3)
             row_height += 40
-            counter += 1
+            line += 1
             
             
         # g.led.set_rgb(*player["bg_color"]["rgb"]) # and led light string
@@ -115,12 +130,22 @@ def main():
             print("Free RAM: ",free(True))
             g.display.set_backlight(0.1)
         if button_x.read():
+            if g.row_selected > 0:
+                    g.row_selected -= 1  
+            else:
+                if g.shift > 0:
+                    g.shift -= 1  
             g.neopixel_strip[1] = set_brightness(colors["red"]["rgb"]) # set the first pixel to white
             g.led.set_rgb(*colors["red"]["rgb"]) # and led light string
             g.neopixel_strip.write()
         if button_y.read():
-            g.neopixel_strip[5] = set_brightness(colors["orange"]["rgb"]) # set the first pixel to white
-            g.led.set_rgb(*colors["orange"]["rgb"]) # and led light string
+            print("g ", g.__dict__)
+            if g.row_selected < (g.total_lines -1):
+                g.row_selected += 1
+            else: 
+                if g.shift+ (g.total_lines-1) < (g.list_length):
+                    g.shift += 1
+
         # check and other overlay graphics?
         g.neopixel_strip.write() 
         g.display.update()
