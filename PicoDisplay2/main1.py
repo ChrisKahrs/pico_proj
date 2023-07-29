@@ -5,7 +5,7 @@ from picographics import PicoGraphics, DISPLAY_PICO_DISPLAY_2, PEN_P4
 from neopixel import NeoPixel
 import gc
 from machine import Pin
-import json
+import math
 
 class g:
     current_screen = 0 # splash
@@ -20,8 +20,6 @@ class g:
     screen_height = 0
     brightness = 0.1
     led_count = 7
-    players = []
-    colors = []
     line = 1 
     row_selected = 0
     shift = 0
@@ -58,12 +56,11 @@ def set_brightness(color):
     return (r, gg, b)  # Return the adjusted color tuple
 
 def main():
-    pin = Pin(g.neopixel_pin, Pin.OUT) 
-    g.neopixel_strip = NeoPixel(pin, g.led_count)
+    g.neopixel_strip = NeoPixel(Pin(g.neopixel_pin, Pin.OUT) , g.led_count)
 
     g.display = PicoGraphics(display=DISPLAY_PICO_DISPLAY_2 ,pen_type=PEN_P4) #rotate= 90
     g.display.set_font("bitmap8")
-    g.display.set_backlight(0.5)
+    g.display.set_backlight(0.7)
     g.screen_width, g.screen_height = g.display.get_bounds()
 
     colors = {"red" :{"rgb": (255, 0, 0), "pen":g.display.create_pen(255, 0, 0) },
@@ -95,14 +92,13 @@ def main():
 
         g.display.set_pen(colors["black"]["pen"])
         g.display.clear()
-        row_height = 10
+        row_height = 10 # figure out how to divide by 6 and have all of this work?  Display text size?
         color_height = 30
-        color_width = 300
+        color_width = g.screen_width - 5
         line = 0
         if first_time_setup:
             first_time_setup = False
             players[0]["start_time"] = time.time()
-            
         
         g.list_length = len(players) -1
         short_list = players[g.shift:g.shift+g.total_lines]
@@ -113,8 +109,9 @@ def main():
             players[g.active_player]["start_time"] = 0
             players[g.current_player]["start_time"] = time.time()
             g.active_player = g.current_player
-            print(json.dumps(players[g.active_player]))
+            # print(json.dumps(players[g.active_player]))
 
+        # display list of players on the screen
         for player in short_list:
             if (g.row_selected == line):
                 if (time.time() % 2 == 0):
@@ -128,13 +125,23 @@ def main():
             g.display.rectangle(5, row_height, color_width, color_height)
 
             g.display.set_pen(player["fg_color"]["pen"])
+            summy = sum(player["turns"])
+            hour = math.floor(summy/3600)
+            min = math.floor((summy - (hour *3600)) /60)
+            sec = round(summy - (min * 60) - (hour * 3600))
+            str_text = player["name"] + "- {0:01}:{1:02}:{2:02}".format(hour, min, sec)
+            adder = 0
             if player["name"] == players[g.current_player]["name"]:
-                time_str = str(sum(player["turns"]) + (time.time() - player["start_time"]))
-                time_str1 = str(player["name"] + ": " + time_str + " t= " + str(len(player["turns"])+1))
-                g.display.text( time_str1, 5, row_height+5, 230, scale = 3)
-            else:
-                time_str2 = str(player["name"]) + ": " + str(sum(player["turns"])) + " t= " + str(len(player["turns"]))
-                g.display.text( time_str2, 5, row_height+5, 230, scale = 3)
+                adder = 1
+                summy = (time.time() - player["start_time"])
+                hour = math.floor(summy/3600)
+                min = math.floor((summy - (hour *3600)) /60)
+                sec = round(summy - (min * 60) - (hour * 3600))
+                str_text =str(str_text + "->{0:01}:{1:02}:{2:02}".format(hour, min, sec))
+                
+            str_text = str(str_text + " t" + str(len(player["turns"])+adder))
+            g.display.text(str_text, 5, row_height+5, g.screen_width, scale = 3)
+
 
             row_height += 40
             line += 1
@@ -142,11 +149,13 @@ def main():
         time.sleep(0.1)
         if button_next.read():
             print("next")
+            
         if button_a.read(): 
             print("Free RAM: ",free(True))
             print('\u2713')
             # print(u'\N{check mark}')show graphics?
             g.display.set_backlight(0.8)
+            
         if button_b.read(): 
             print("Free RAM: ",free(True))
             g.display.set_backlight(0.1)
@@ -179,56 +188,15 @@ def main():
 
 if __name__ == "__main__":
     main()
-    
 
-
-"""
-while True:
-    if button_a.read(): 
-        display.set_backlight(0.5)
-        display.set_pen(red)
-        display.clear()
-        display.set_pen(black)
+""" old code
         #display.text("Button A Pressed", 10, 10, 240, 6)   # landscape
         display.text("Button A Pressed", 2, 10, 135, 4)    # potrait 
-        display.update()
-        led.set_rgb(255, 0, 0)
-        print("Free RAM: ",free(True))
-        time.sleep(1.0)
-    elif button_b.read():
-        display.set_pen(yellow)
-        display.clear()
-        display.set_pen(black)
-        #display.text("Button B Pressed", 10, 10, 240, 6)   # landscape
-        display.text("Button B Pressed", 2, 10, 135, 3)    # potrait 
-        display.update()
-        led.set_rgb(255, 255, 0)
-        time.sleep(1.0)
+        
         a=95
         file=open("add.csv","w")	# file is created and opened in write mode
         while a>0:			# program logic			
             file.write(str(a)+",")	# data is written as a string in the CSV file
             file.flush()		# internal buffer is flushed
             a-=5
-    elif button_x.read():    
-        display.set_pen(green)
-        display.clear()
-        display.set_pen(black)
-        #display.text("Button X Pressed", 10, 10, 240, 6)   # landscape
-        display.text("Button X Pressed", 2, 10, 135, 3)    # potrait 
-        display.update()
-        led.set_rgb(0, 255, 0)
-        time.sleep(1.0)
-    elif button_y.read():    
-        display.set_pen(blue)
-        display.clear()
-        display.set_pen(black)
-        #display.text("Button Y Pressed", 10, 10, 240, 6)   # landscape
-        display.text("Button Y Pressed", 2, 10, 135, 3)    # potrait 
-        display.update()
-        led.set_rgb(0, 0, 255)
-        time.sleep(1.0)
-        display.clear()
-        display.update()
-        display.set_backlight(0.1)
 """
