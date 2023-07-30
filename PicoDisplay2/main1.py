@@ -15,6 +15,7 @@ class g:
     neopixel_pin = 2
     neopixel_strip = None
     neopixel_brightness = 0.1
+    screen_brightness = 0.7
     led = None
     screen_width = 0
     screen_height = 0
@@ -25,6 +26,9 @@ class g:
     shift = 0
     list_length = 0
     total_lines = 6
+    page = 1 # 0 splash, 1 settings, 2 game, 3 score
+    page_old = 2
+    player_count = 1
         
 # pin layouts
 button_a = Button(12)
@@ -32,10 +36,10 @@ button_b = Button(13)
 button_x = Button(14)
 button_y = Button(15)
 button_next = Button(18, Pin.IN, Pin.PULL_UP)
+g.led = RGBLED(6, 7, 8)
 # pin GP02 on neopixel
 # waveshare ups gp6,7 
 # open? 0,1,3,4,5,9,10,11,22,26,27,28 
-g.led = RGBLED(6, 7, 8)
 # button GP16-21 g.display
 
 def free(full=False):
@@ -75,7 +79,7 @@ def main():
             "orange" :{"rgb": (255, 165, 0), "pen":g.display.create_pen(255, 165, 0)},
             "grey" :{"rgb": (128, 128, 128), "pen":g.display.create_pen(128, 128, 128)},
             "cyan" :{"rgb": (0, 255, 255), "pen":g.display.create_pen(0, 255, 255)}}
-
+    player_counts = [1,2,3,4,5,6,7,8,9,10]
     players = [{"name":"P0", "start_time": 0, "bg_color": colors["grey"], "fg_color": colors["white"], "turns": [], "position" : 0},
                {"name":"P1", "start_time": 0, "bg_color": colors["red"], "fg_color": colors["black"], "turns": [], "position" : 1},
                {"name":"P2", "start_time": 0, "bg_color": colors["yellow"], "fg_color": colors["black"], "turns": [], "position" : 2},
@@ -89,102 +93,180 @@ def main():
     first_time_setup = True
 
     while True:
-
         g.display.set_pen(colors["black"]["pen"])
         g.display.clear()
-        row_height = 10 # figure out how to divide by 6 and have all of this work?  Display text size?
-        color_height = 30
-        color_width = g.screen_width - 5
-        line = 0
-        if first_time_setup:
-            first_time_setup = False
-            players[0]["start_time"] = time.time()
+        if g.page != g.page_old:
+            g.page_old = g.page
         
-        g.list_length = len(players) -1
-        short_list = players[g.shift:g.shift+g.total_lines]
+        if g.page == 2:
 
-        if g.current_player != g.active_player:
-            print("player changed from ", g.active_player, " to ", g.current_player)
-            players[g.active_player]["turns"].append(time.time() - players[g.active_player]["start_time"])
-            players[g.active_player]["start_time"] = 0
-            players[g.current_player]["start_time"] = time.time()
-            g.active_player = g.current_player
-            # print(json.dumps(players[g.active_player]))
+            row_height = 10 # figure out how to divide by 6 and have all of this work?  Display text size?
+            color_height = 30
+            color_width = g.screen_width - 10
+            line = 0
+            if first_time_setup:
+                first_time_setup = False
+                players[0]["start_time"] = time.time()
+            
+            g.list_length = len(players) -1
+            short_list = players[g.shift:g.shift+g.total_lines]
 
-        # display list of players on the screen
-        for player in short_list:
-            if (g.row_selected == line):
-                if (time.time() % 2 == 0):
-                    g.display.set_pen(colors["white"]["pen"])
-                    g.display.rectangle(0, row_height-2, color_width+12, color_height+4)
-                for i in range(g.led_count):
-                    g.neopixel_strip[i] = set_brightness(player["bg_color"]["rgb"])
-                g.led.set_rgb(*player["bg_color"]["rgb"])
+            if g.current_player != g.active_player:
+                print("player changed from ", g.active_player, " to ", g.current_player)
+                players[g.active_player]["turns"].append(time.time() - players[g.active_player]["start_time"])
+                players[g.active_player]["start_time"] = 0
+                players[g.current_player]["start_time"] = time.time()
+                g.active_player = g.current_player
+                # print(json.dumps(players[g.active_player]))
 
-            g.display.set_pen(player["bg_color"]["pen"])
-            g.display.rectangle(5, row_height, color_width, color_height)
+            # display list of players on the screen
+            for player in short_list:
+                if (g.row_selected == line):
+                    if (time.time() % 2 == 0):
+                        g.display.set_pen(colors["white"]["pen"])
+                        g.display.rectangle(0, row_height-4, color_width+12, color_height+8)
+                    for i in range(g.led_count):
+                        g.neopixel_strip[i] = set_brightness(player["bg_color"]["rgb"])
+                    g.led.set_rgb(*player["bg_color"]["rgb"])
 
-            g.display.set_pen(player["fg_color"]["pen"])
-            summy = sum(player["turns"])
-            hour = math.floor(summy/3600)
-            min = math.floor((summy - (hour *3600)) /60)
-            sec = round(summy - (min * 60) - (hour * 3600))
-            str_text = player["name"] + "- {0:01}:{1:02}:{2:02}".format(hour, min, sec)
-            adder = 0
-            if player["name"] == players[g.current_player]["name"]:
-                adder = 1
-                summy = (time.time() - player["start_time"])
+                g.display.set_pen(player["bg_color"]["pen"])
+                g.display.rectangle(5, row_height, color_width, color_height)
+
+                g.display.set_pen(player["fg_color"]["pen"])
+                summy = sum(player["turns"])
                 hour = math.floor(summy/3600)
                 min = math.floor((summy - (hour *3600)) /60)
                 sec = round(summy - (min * 60) - (hour * 3600))
-                str_text =str(str_text + "->{0:01}:{1:02}:{2:02}".format(hour, min, sec))
+                str_text = player["name"] + "- {0:01}:{1:02}:{2:02}".format(hour, min, sec)
+                adder = 0
+                if player["name"] == players[g.current_player]["name"]:
+                    adder = 1
+                    summy = (time.time() - player["start_time"])
+                    hour = math.floor(summy/3600)
+                    min = math.floor((summy - (hour *3600)) /60)
+                    sec = round(summy - (min * 60) - (hour * 3600))
+                    str_text =str(str_text + "->{0:01}:{1:02}:{2:02}".format(hour, min, sec))
+                    
+                str_text = str(str_text + " t" + str(len(player["turns"])+adder))
+                g.display.text(str_text, 5, row_height+5, g.screen_width, scale = 3)
+
+
+                row_height += 40
+                line += 1
                 
-            str_text = str(str_text + " t" + str(len(player["turns"])+adder))
-            g.display.text(str_text, 5, row_height+5, g.screen_width, scale = 3)
-
-
-            row_height += 40
-            line += 1
-            
-        time.sleep(0.1)
-        if button_next.read():
-            print("next")
-            
-        if button_a.read(): 
-            print("Free RAM: ",free(True))
-            print('\u2713')
-            # print(u'\N{check mark}')show graphics?
-            g.display.set_backlight(0.8)
-            
-        if button_b.read(): 
-            print("Free RAM: ",free(True))
-            g.display.set_backlight(0.1)
-        
-        if button_x.read():
-            if g.current_player > 0:
-                g.current_player -= 1
-            if g.row_selected > 0:
-                g.row_selected -= 1  
-            else:
-                if g.shift > 0:
-                    g.shift -= 1  
-
-        if button_y.read():
-            if g.current_player <= (g.list_length):
-                g.current_player += 1
-            if g.row_selected < (g.total_lines -1):
-                g.row_selected += 1
-            else: 
-                if g.shift+ (g.total_lines-1) < (g.list_length):
-                    g.shift += 1
-            if g.current_player == (g.list_length+1):
-                g.current_player = 1
+            # button checks
+            if button_next.read():
+                print("next")
+                
+            if button_a.read(): # pause button
+                print("Free RAM: ",free(True))
+                print('\u2713')
+                # print(u'\N{check mark}')show graphics?
+                g.display.set_backlight(g.screen_brightness)
+                # unpause come back to current player?
+                # g.paused_current_player = g.current_player
+                # g.paused_row_selected = g.row_selected
+                # g.paused_shift = g.shift
+                g.current_player = 0
                 g.shift = 0
+                g.row_selected = 0
+                
+            if button_b.read(): 
+                print("Free RAM: ",free(True))
+                g.display.set_backlight(0.1)
+            
+            if button_x.read():
+                if g.current_player > 0:
+                    g.current_player -= 1
+                if g.row_selected > 0:
+                    g.row_selected -= 1  
+                else:
+                    if g.shift > 0:
+                        g.shift -= 1  
+
+            if button_y.read():
+                if g.current_player <= (g.list_length):
+                    g.current_player += 1
+                if g.row_selected < (g.total_lines -1):
+                    g.row_selected += 1
+                else: 
+                    if g.shift+ (g.total_lines-1) < (g.list_length):
+                        g.shift += 1
+                if g.current_player == (g.list_length+1):
+                    g.current_player = 1
+                    g.shift = 0
+                    g.row_selected = 1
+
+        if g.page == 1:
+            
+            row_height = 10 # figure out how to divide by 6 and have all of this work?  Display text size?
+            color_height = 30
+            color_width = g.screen_width - 10
+            line = 0
+            if first_time_setup:
+                first_time_setup = False
                 g.row_selected = 1
+                row_height= 50
+            
+            g.display.set_pen(colors["white"]["pen"])
+            g.display.text(" Player Count? ", 5, row_height+5, g.screen_width, scale = 3)
+            
+            g.list_length = len(player_counts) -1
+            short_list = player_counts[g.shift:g.shift+g.total_lines]
+
+            # display list of players on the screen
+            for pcount in short_list:
+                if line == 0:
+                    row_height += 40
+                if (g.row_selected == line):
+                    if (time.time() % 2 == 0):
+                        g.display.set_pen(colors["white"]["pen"])
+                        g.display.rectangle(0, row_height-4, color_width+12, color_height+8)
+                g.display.text(str(player_counts[pcount]), 5, row_height+5, g.screen_width, scale = 3)
+                row_height += 40
+                line += 1
+                
+            # button checks
+            if button_next.read():
+                print("next")
+                
+            if button_a.read(): # pause button
+                print("Free RAM: ",free(True))
+                print('\u2713')
+                # print(u'\N{check mark}')show graphics?
+                g.display.set_backlight(g.screen_brightness)
+                # record and return to home screen? Or move to player setup screens?
+                
+            if button_b.read(): 
+                print("Free RAM: ",free(True))
+                g.display.set_backlight(0.1)
+            
+            if button_x.read():
+                if g.player_count > 0:
+                    g.player_count -= 1
+                if g.row_selected > 0:
+                    g.row_selected -= 1  
+                else:
+                    if g.shift > 0:
+                        g.shift -= 1  
+
+            if button_y.read():
+                if g.player_count <= (g.list_length):
+                    g.player_count += 1
+                if g.row_selected < (g.total_lines -1):
+                    g.row_selected += 1
+                else: 
+                    if g.shift+ (g.total_lines-1) < (g.list_length):
+                        g.shift += 1
+                if g.player_count == (g.list_length+1):
+                    g.player_count = 1
+                    g.shift = 0
+                    g.row_selected = 1
 
         # check and other overlay graphics?
         g.neopixel_strip.write() 
         g.display.update()
+        time.sleep(0.1)
 
 if __name__ == "__main__":
     main()
