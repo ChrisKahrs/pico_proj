@@ -198,31 +198,39 @@ def main():
                     g.row_selected = 1
 
         if g.page == 1:
-            
+            question_window_height = 0 # figure out how to divide by 6 and have all of this work?  Display text size?
+            scroll_window_height = 0 # 5/6th of the screen
             row_height = 10 # figure out how to divide by 6 and have all of this work?  Display text size?
             color_height = 30
             color_width = g.screen_width - 10
             line = 0
             if first_time_setup:
                 first_time_setup = False
-                g.row_selected = 1
+                g.row_selected = 0
+                g.player_count = 0
                 row_height= 50
+                g.total_lines = 5
+                g.shift = 0
             
             g.display.set_pen(colors["white"]["pen"])
-            g.display.text(" Player Count? ", 5, row_height+5, g.screen_width, scale = 3)
+            g.display.text("Player Count? ", 5, row_height + 5, g.screen_width, scale = 3)
             
             g.list_length = len(player_counts) -1
             short_list = player_counts[g.shift:g.shift+g.total_lines]
-
+            row_height += 40 # to take into account the question window
             # display list of players on the screen
             for pcount in short_list:
-                if line == 0:
-                    row_height += 40
                 if (g.row_selected == line):
                     if (time.time() % 2 == 0):
                         g.display.set_pen(colors["white"]["pen"])
                         g.display.rectangle(0, row_height-4, color_width+12, color_height+8)
-                g.display.text(str(player_counts[pcount]), 5, row_height+5, g.screen_width, scale = 3)
+                        g.display.set_pen(colors["black"]["pen"])
+                        g.display.text(str(player_counts[pcount-1]), 5, row_height+5, g.screen_width, scale = 3)
+                        g.display.set_pen(colors["white"]["pen"])
+                    else:
+                        g.display.text(str(player_counts[pcount-1]), 5, row_height+5, g.screen_width, scale = 3)
+                else:
+                    g.display.text(str(player_counts[pcount-1]), 5, row_height+5, g.screen_width, scale = 3)
                 row_height += 40
                 line += 1
                 
@@ -259,9 +267,13 @@ def main():
                     if g.shift+ (g.total_lines-1) < (g.list_length):
                         g.shift += 1
                 if g.player_count == (g.list_length+1):
-                    g.player_count = 1
+                    g.player_count = 0
                     g.shift = 0
-                    g.row_selected = 1
+                    g.row_selected = 0
+                print(g.player_count)
+                print(g.row_selected)
+                print(g.shift)
+
 
         # check and other overlay graphics?
         g.neopixel_strip.write() 
