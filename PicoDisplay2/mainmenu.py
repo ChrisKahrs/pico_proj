@@ -7,6 +7,20 @@ import gc
 from machine import Pin
 import math
 
+BLACK = (0, 0, 0)
+WHITE = (255, 255, 255)
+RED = (255, 0, 0)
+BLUE = (0, 0, 255)
+GREEN = (0, 255, 0)
+YELLOW = (255, 255, 0)
+PURPLE = (255, 0, 255)
+PINK = (255, 192, 203)
+LIME = (0, 255, 255)
+ORANGE = (255, 165, 0)
+GREY = (128, 128, 128)
+CYAN = (0, 255, 255)
+BROWN = (165, 42, 42)
+
 class g:
     current_screen = 0 # splash
     current_player = 0 # pause
@@ -59,26 +73,56 @@ def set_brightness(color):
     b = int(b * g.brightness)  # Scale the blue value
     return (r, gg, b)  # Return the adjusted color tuple
 
-def main():
+def run_menu():
     g.neopixel_strip = NeoPixel(Pin(g.neopixel_pin, Pin.OUT) , g.led_count)
 
     g.display = PicoGraphics(display=DISPLAY_PICO_DISPLAY_2 ,pen_type=PEN_P4) #rotate= 90
     g.display.set_font("bitmap8")
     g.display.set_backlight(0.7)
     g.screen_width, g.screen_height = g.display.get_bounds()
-
-    colors = {"red" :{"rgb": (255, 0, 0), "pen":g.display.create_pen(255, 0, 0) },
-            "yellow" :{"rgb": (255, 255, 0), "pen":g.display.create_pen(255, 255, 0)},
-            "green" :{"rgb": (0, 255, 0), "pen":g.display.create_pen(0, 255, 0)},
-            "blue" :{"rgb": (0, 0, 255), "pen":g.display.create_pen(0, 0, 255)},
-            "black" :{"rgb": (0, 0, 0), "pen":g.display.create_pen(0, 0, 0)},
-            "white" :{"rgb": (255, 255, 255), "pen":g.display.create_pen(255, 255, 255)},
-            "purple" :{"rgb": (255, 0, 255), "pen":g.display.create_pen(255, 0, 255)},
-            "pink" :{"rgb": (255, 192, 203), "pen":g.display.create_pen(255, 192, 203)},
-            "lime" :{"rgb": (0, 255, 255), "pen":g.display.create_pen(0, 255, 255)},
-            "orange" :{"rgb": (255, 165, 0), "pen":g.display.create_pen(255, 165, 0)},
-            "grey" :{"rgb": (128, 128, 128), "pen":g.display.create_pen(128, 128, 128)},
-            "cyan" :{"rgb": (0, 255, 255), "pen":g.display.create_pen(0, 255, 255)}}
+    menu_system = {"defaults": {"bg_color": "black",
+                               "fg_color": "white",
+                               "alt_fg_color": "black",
+                               "alt_bg_color": "white",
+                               "blink_rate": 0.5,
+                               "font": "bitmap8",
+                               "font_scale": 3,
+                               "font_height": 8,
+                               "text_lines": 1,
+                               "option_lines": 5,
+                               "start_menu": "Splash"},
+                  "current_menu": "Splash",
+                  "current_option": "Settings", # or should it be 0?
+                  "Splash": {"type": "menu",
+                             "text": "Welcome to the game",
+                             "options": ["Settings", "Start"],
+                             "value": "Settings"},
+                  "Settings": {"type": "menu",
+                               "text": "Select Setting",
+                               "options": ["Players", "Brightness"],
+                               "value": "Players"},
+                  "Players": {"type": "option",
+                              "text": "Number of Players?",
+                              "options": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+                              "value": 4},
+                  "Brightness": {"type": "option",
+                                 "text": "Screen Brightness?",
+                                 "options": [0.2, 0.4, 0.6, 0.8, 1.0],
+                                 "value": 0.6}
+    }
+    colors = {"red" :{"rgb": RED, "pen":g.display.create_pen(*RED) },
+            "yellow" :{"rgb": YELLOW, "pen":g.display.create_pen(*YELLOW)},
+            "green" :{"rgb": GREEN, "pen":g.display.create_pen(*GREEN)},
+            "blue" :{"rgb": BLUE, "pen":g.display.create_pen(*BLUE)},
+            "black" :{"rgb": BLACK, "pen":g.display.create_pen(*BLACK)},
+            "white" :{"rgb": WHITE, "pen":g.display.create_pen(*WHITE)},
+            "purple" :{"rgb": PURPLE, "pen":g.display.create_pen(*PURPLE)},
+            "pink" :{"rgb": PINK, "pen":g.display.create_pen(*PINK)},
+            "lime" :{"rgb": LIME, "pen":g.display.create_pen(*LIME)},
+            "orange" :{"rgb": ORANGE, "pen":g.display.create_pen(*ORANGE)},
+            "grey" :{"rgb": GREY, "pen":g.display.create_pen(*GREY)},
+            "cyan" :{"rgb": CYAN, "pen":g.display.create_pen(*CYAN)},
+                        "cyan" :{"rgb": BROWN, "pen":g.display.create_pen(*BROWN)}}
     player_counts = [1,2,3,4,5,6,7,8,9,10]
     players = [{"name":"P0", "start_time": 0, "bg_color": colors["grey"], "fg_color": colors["white"], "turns": [], "position" : 0},
                {"name":"P1", "start_time": 0, "bg_color": colors["red"], "fg_color": colors["black"], "turns": [], "position" : 1},
@@ -93,8 +137,29 @@ def main():
     first_time_setup = True
 
     while True:
-        g.display.set_pen(colors["black"]["pen"])
+        g.display.set_pen(colors[menu_system["defaults"]["bg_color"]]["pen"])
         g.display.clear()
+        title_height =  g.screen_height / (menu_system["defaults"]["text_lines"] + menu_system["defaults"]["option_lines"])
+        option_height = g.screen_height - title_height
+        current_menu = menu_system[menu_system["current_menu"]]
+        print("current_menu", current_menu)
+        current_menu_text = current_menu["text"]
+        g.display.set_pen(colors[menu_system["defaults"]["alt_bg_color"]]["pen"])
+        g.display.rectangle(0, 0, g.screen_width, int(title_height))
+        g.display.set_pen(colors[menu_system["defaults"]["alt_fg_color"]]["pen"])
+        g.display.text(current_menu_text, 5, 5, g.screen_width, scale = menu_system["defaults"]["font_scale"]) # create another function for this? max_lines = menu_system["defaults"]["text_lines"])
+        line = 0
+        g.display.set_pen(colors[menu_system["defaults"]["fg_color"]]["pen"])
+        row_height = option_height / menu_system["defaults"]["option_lines"]
+        for i, option in enumerate(current_menu["options"]):
+            if (line + 1 + row_height) < option_height:
+                line += 1
+                g.display.text(option, 5, int(5 + (line * row_height)), g.screen_width, scale = menu_system["defaults"]["font_scale"])
+        g.display.update()
+        break
+        
+        
+        
         if g.page != g.page_old:
             g.page_old = g.page
         
@@ -276,12 +341,11 @@ def main():
 
 
         # check and other overlay graphics?
-        g.neopixel_strip.write() 
         g.display.update()
         time.sleep(0.1)
 
 if __name__ == "__main__":
-    main()
+    run_menu()
 
 """ old code
         #display.text("Button A Pressed", 10, 10, 240, 6)   # landscape
