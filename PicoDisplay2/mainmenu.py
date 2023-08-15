@@ -86,11 +86,13 @@ def run_menu():
                                 "fg_color": "white",
                                 "alt_fg_color": "black",
                                 "alt_bg_color": "orange",
+                                "title_fg_color": "black",
+                                "title_bg_color": "white",
                                 "blink_rate": 0.5,
                                 "font": "bitmap8",
                                 "font_scale": 3,
                                 "font_height": 8,
-                                "text_lines": 1,
+                                "title_lines": 1,
                                 "option_lines": 5,
                                 "start_menu": "Splash"},
                     "current_menu": "Splash",
@@ -148,12 +150,14 @@ def run_menu():
         current_menu = menu_system[menu_system["current_menu"]]
         g.display.set_pen(colors[defaults["bg_color"]]["pen"])
         g.display.clear()
-        title_height =  g.screen_height / (defaults["text_lines"] + defaults["option_lines"]) # maybe x row height like 2 for the title box?
+        title_height =  g.screen_height / (defaults["title_lines"] + defaults["option_lines"]) # maybe x row height like 2 for the title box?
         option_height = g.screen_height - title_height
-        g.display.set_pen(colors[defaults["alt_bg_color"]]["pen"])
+        g.display.set_pen(colors[defaults["title_bg_color"]]["pen"])
         g.display.rectangle(0, 0, g.screen_width, int(title_height))
-        g.display.set_pen(colors[defaults["alt_fg_color"]]["pen"])
-        g.display.text(current_menu["text"], g.top_text_buffer, g.side_text_buffer, g.screen_width, scale = defaults["font_scale"]) # create another function for this? max_lines = menu_system["defaults"]["text_lines"])
+        g.display.set_pen(colors[defaults["title_fg_color"]]["pen"])
+        # check if len of text is greater than 1 line, then every second, 
+        # subtract 1 from the start of the line, when it is 0 start over again?
+        g.display.text(current_menu["text"], g.top_text_buffer, g.side_text_buffer, g.screen_width, scale = defaults["font_scale"]) # create another function for this? max_lines = menu_system["defaults"]["title_lines"])
         line = 0
         display_options = current_menu["options"][shift:shift+defaults["option_lines"]]
         row_height = int(option_height / defaults["option_lines"])
