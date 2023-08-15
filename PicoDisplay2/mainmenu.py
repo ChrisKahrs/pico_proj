@@ -76,39 +76,45 @@ def set_brightness(color):
     return (r, gg, b)  # Return the adjusted color tuple
 
 def run_menu():
+    # read json file into menu_system
     g.display = PicoGraphics(display=DISPLAY_PICO_DISPLAY_2 ,pen_type=PEN_P4) #rotate= 90
     g.display.set_font("bitmap8")
     g.display.set_backlight(0.7)
+    g.led.set_rgb(0, 0, 0)
     g.screen_width, g.screen_height = g.display.get_bounds()
     menu_system = {"defaults": {"bg_color": "black",
-                               "fg_color": "white",
-                               "alt_fg_color": "black",
-                               "alt_bg_color": "white",
-                               "blink_rate": 0.5,
-                               "font": "bitmap8",
-                               "font_scale": 3,
-                               "font_height": 8,
-                               "text_lines": 1,
-                               "option_lines": 5,
-                               "start_menu": "Splash"},
-                  "current_menu": "Splash",
-                  "current_option": "Settings", # or should it be 0?
-                  "Splash": {"type": "menu",
-                             "text": "Welcome to the game", #scrolling text?
-                             "options": ["Settings", "Start", "Exit","Test","Test2","test3","test4"],
-                             "value": "Settings"},
-                  "Settings": {"type": "menu",
-                               "text": "Select Setting",
-                               "options": ["Players", "Brightness"],
-                               "value": "Players"},
-                  "Players": {"type": "option",
-                              "text": "Number of Players?",
-                              "options": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-                              "value": 4},
-                  "Brightness": {"type": "option",
-                                 "text": "Screen Brightness?",
-                                 "options": [0.2, 0.4, 0.6, 0.8, 1.0],
-                                 "value": 0.6}
+                                "fg_color": "white",
+                                "alt_fg_color": "black",
+                                "alt_bg_color": "white",
+                                "blink_rate": 0.5,
+                                "font": "bitmap8",
+                                "font_scale": 3,
+                                "font_height": 8,
+                                "text_lines": 1,
+                                "option_lines": 5,
+                                "start_menu": "Splash"},
+                    "current_menu": "Splash",
+                    "current_option": "Settings", # or should it be 0?
+                    "Splash": {"type": "menu",
+                                "text": "Welcome to the game this is more text", #scrolling text?
+                                "options": ["Settings", "Start", "Exit","Test","Test2","test3","test4"],
+                                "value": "Settings"},
+                    "Settings": {"type": "menu",
+                                "text": "Select Setting",
+                                "options": ["Players", "Brightness"],
+                                "value": "Players"},
+                    "Players": {"type": "option",
+                                "text": "Number of Players?",
+                                "options": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+                                "value": 4},
+                    "Brightness": {"type": "option",
+                                    "text": "Screen Brightness?",
+                                    "options": [0.2, 0.4, 0.6, 0.8, 1.0],
+                                    "value": 0.6},
+                    "P1_Color": {"type": "option", # better way?
+                                "text": "Player 1 Color?",
+                                "options": ["Red", "Yellow", "Green", "Blue", "Black", "White", "Purple", "Pink", "Lime", "Orange", "Grey", "Cyan", "Brown"]},
+                                #seat setup, light configuation, etc
     }
     colors = {"red" :{"rgb": RED, "pen":g.display.create_pen(*RED) },
             "yellow" :{"rgb": YELLOW, "pen":g.display.create_pen(*YELLOW)},
@@ -135,30 +141,37 @@ def run_menu():
                {"name":"P8", "start_time": 0, "bg_color": colors["pink"], "fg_color": colors["black"], "turns": [], "position" : 8},
                {"name":"P9", "start_time": 0, "bg_color": colors["lime"], "fg_color": colors["black"], "turns": [], "position" : 9}]
     first_time_setup = True
+    shift = 0
 
     while True:
         defaults = menu_system["defaults"]
         current_menu = menu_system[menu_system["current_menu"]]
         g.display.set_pen(colors[defaults["bg_color"]]["pen"])
         g.display.clear()
-        title_height =  g.screen_height / (defaults["text_lines"] + defaults["option_lines"])
+        title_height =  g.screen_height / (defaults["text_lines"] + defaults["option_lines"]) # maybe x row height like 2 for the title box?
         option_height = g.screen_height - title_height
-        print("current_menu", current_menu)
         current_menu_text = current_menu["text"]
         g.display.set_pen(colors[defaults["alt_bg_color"]]["pen"])
         g.display.rectangle(0, 0, g.screen_width, int(title_height))
         g.display.set_pen(colors[defaults["alt_fg_color"]]["pen"])
         g.display.text(current_menu_text, 5, 5, g.screen_width, scale = defaults["font_scale"]) # create another function for this? max_lines = menu_system["defaults"]["text_lines"])
-        line = 0
-        g.display.set_pen(colors[defaults["fg_color"]]["pen"])
+        line = 1
+        display_options = current_menu["options"][shift:shift+defaults["option_lines"]]
+
         row_height = int(option_height / defaults["option_lines"])
-        for i, option in enumerate(current_menu["options"]):
-            if (line + 1 + row_height) < option_height:
-                line += 1
-                g.display.text(option, g.top_text_buffer, g.side_text_buffer + (line * row_height), g.screen_width, scale = defaults["font_scale"])
+        for i, option in enumerate(display_options):
+            g.display.set_pen(colors[defaults["fg_color"]]["pen"])
+            if (option == current_menu["value"] and time.time() % 2 == 0):
+                g.display.set_pen(colors[defaults["alt_bg_color"]]["pen"])
+                g.display.rectangle(0, int(title_height + ((line-1) * row_height)), g.screen_width, int(row_height))
+                g.display.set_pen(colors[defaults["alt_fg_color"]]["pen"])
+                option = "> " + option + " <"
+            g.display.text(option, g.top_text_buffer, g.side_text_buffer + ((line) * row_height), g.screen_width, scale = defaults["font_scale"])
+            line += 1
         g.display.update()
-        print("Free RAM: ",free(True))
-        break
+        time.sleep(0.1)
+        # print("Free RAM: ",free(True))
+
 
 if __name__ == "__main__":
     run_menu()
