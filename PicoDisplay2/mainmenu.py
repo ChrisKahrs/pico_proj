@@ -85,7 +85,7 @@ def run_menu():
     menu_system = {"defaults": {"bg_color": "black",
                                 "fg_color": "white",
                                 "alt_fg_color": "black",
-                                "alt_bg_color": "white",
+                                "alt_bg_color": "orange",
                                 "blink_rate": 0.5,
                                 "font": "bitmap8",
                                 "font_scale": 3,
@@ -150,24 +150,37 @@ def run_menu():
         g.display.clear()
         title_height =  g.screen_height / (defaults["text_lines"] + defaults["option_lines"]) # maybe x row height like 2 for the title box?
         option_height = g.screen_height - title_height
-        current_menu_text = current_menu["text"]
         g.display.set_pen(colors[defaults["alt_bg_color"]]["pen"])
         g.display.rectangle(0, 0, g.screen_width, int(title_height))
         g.display.set_pen(colors[defaults["alt_fg_color"]]["pen"])
-        g.display.text(current_menu_text, 5, 5, g.screen_width, scale = defaults["font_scale"]) # create another function for this? max_lines = menu_system["defaults"]["text_lines"])
-        line = 1
+        g.display.text(current_menu["text"], g.top_text_buffer, g.side_text_buffer, g.screen_width, scale = defaults["font_scale"]) # create another function for this? max_lines = menu_system["defaults"]["text_lines"])
+        line = 0
         display_options = current_menu["options"][shift:shift+defaults["option_lines"]]
-
         row_height = int(option_height / defaults["option_lines"])
+        
         for i, option in enumerate(display_options):
             g.display.set_pen(colors[defaults["fg_color"]]["pen"])
-            if (option == current_menu["value"] and time.time() % 2 == 0):
-                g.display.set_pen(colors[defaults["alt_bg_color"]]["pen"])
-                g.display.rectangle(0, int(title_height + ((line-1) * row_height)), g.screen_width, int(row_height))
-                g.display.set_pen(colors[defaults["alt_fg_color"]]["pen"])
-                option = "> " + option + " <"
-            g.display.text(option, g.top_text_buffer, g.side_text_buffer + ((line) * row_height), g.screen_width, scale = defaults["font_scale"])
+            if (option == current_menu["value"]): # make it blink 
+                    if (time.time() % 2 == 0):
+                        g.display.set_pen(colors[defaults["alt_bg_color"]]["pen"])
+                        g.display.rectangle(0, int(title_height + (line * row_height)), g.screen_width, int(row_height))
+                        g.display.set_pen(colors[defaults["alt_fg_color"]]["pen"])
+                    else:
+                        option = "> " + option + " <"
+            g.display.text(option, g.top_text_buffer, g.side_text_buffer + ((line+1) * row_height), g.screen_width, scale = defaults["font_scale"])
             line += 1
+            
+        if button_x.read():
+            if current_menu["options"][0] != current_menu["value"]:
+                current_menu["value"] = current_menu["options"][current_menu["options"].index(current_menu["value"]) - 1]
+                shift -= 1
+
+        if button_y.read():
+            # check for end of list then do nothing if value = last item
+            if current_menu["options"][-1] != current_menu["value"]:
+                current_menu["value"] = current_menu["options"][current_menu["options"].index(current_menu["value"]) + 1]
+                shift += 1
+
         g.display.update()
         time.sleep(0.1)
         # print("Free RAM: ",free(True))
