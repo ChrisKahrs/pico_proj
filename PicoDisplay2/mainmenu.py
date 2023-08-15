@@ -92,13 +92,12 @@ def run_menu():
                                 "font": "bitmap8",
                                 "font_scale": 3,
                                 "font_height": 8,
-                                "title_lines": 1,
                                 "option_lines": 5,
                                 "start_menu": "Splash"},
                     "current_menu": "Splash",
-                    "current_option": "Settings", # or should it be 0?
+                    "current_option": "Settings",
                     "Splash": {"type": "menu",
-                                "text": "Welcome to the game this is more text", #scrolling text?
+                                "text": "Welcome to the game there is more text here to test the scroll function", 
                                 "options": ["Settings", "Start", "Exit","Test","Test2","test3","test4"],
                                 "value": "Settings"},
                     "Settings": {"type": "menu",
@@ -144,34 +143,48 @@ def run_menu():
                {"name":"P9", "start_time": 0, "bg_color": colors["lime"], "fg_color": colors["black"], "turns": [], "position" : 9}]
     first_time_setup = True
     shift = 0
+    scroll_counter = 0
+    scroll_title = ""
 
     while True:
         defaults = menu_system["defaults"]
         current_menu = menu_system[menu_system["current_menu"]]
         g.display.set_pen(colors[defaults["bg_color"]]["pen"])
         g.display.clear()
-        title_height =  g.screen_height / (defaults["title_lines"] + defaults["option_lines"]) # maybe x row height like 2 for the title box?
+        title_height =  int(g.screen_height / (1 + defaults["option_lines"]) * 1) # maybe x row height like 2 for the title box?
         option_height = g.screen_height - title_height
         g.display.set_pen(colors[defaults["title_bg_color"]]["pen"])
         g.display.rectangle(0, 0, g.screen_width, int(title_height))
         g.display.set_pen(colors[defaults["title_fg_color"]]["pen"])
         # check if len of text is greater than 1 line, then every second, 
         # subtract 1 from the start of the line, when it is 0 start over again?
-        g.display.text(current_menu["text"], g.top_text_buffer, g.side_text_buffer, g.screen_width, scale = defaults["font_scale"]) # create another function for this? max_lines = menu_system["defaults"]["title_lines"])
+        title_width = g.display.measure_text(current_menu["text"], defaults["font_scale"])
+        scroll_title_width = g.display.measure_text(scroll_title, defaults["font_scale"])
+        print("title width: ", title_width)
+        print("scroll title width: ", scroll_title_width)
+        if scroll_title_width < g.screen_width:
+            scroll_title = " " + current_menu["text"]
+        else:
+            if scroll_counter % 2 == 0:
+                scroll_title = scroll_title[1:]
+        g.display.text(scroll_title, g.side_text_buffer, g.top_text_buffer, 100_000, scale = defaults["font_scale"]) 
+        
         line = 0
         display_options = current_menu["options"][shift:shift+defaults["option_lines"]]
         row_height = int(option_height / defaults["option_lines"])
         
         for i, option in enumerate(display_options):
             g.display.set_pen(colors[defaults["fg_color"]]["pen"])
-            if (option == current_menu["value"]): # make it blink 
-                    if (time.time() % 2 == 0):
-                        g.display.set_pen(colors[defaults["alt_bg_color"]]["pen"])
-                        g.display.rectangle(0, int(title_height + (line * row_height)), g.screen_width, int(row_height))
-                        g.display.set_pen(colors[defaults["alt_fg_color"]]["pen"])
-                    else:
-                        option = "> " + option + " <"
-            g.display.text(option, g.top_text_buffer, g.side_text_buffer + ((line+1) * row_height), g.screen_width, scale = defaults["font_scale"])
+            if (option == current_menu["value"]): # make it blink
+                if (option != current_menu["options"][0]):
+                    option = "^ " + option
+                if (time.time() % 2 == 0):
+                    g.display.set_pen(colors[defaults["alt_bg_color"]]["pen"])
+                    g.display.rectangle(0, int(title_height + (line * row_height)), g.screen_width, int(row_height))
+                    g.display.set_pen(colors[defaults["alt_fg_color"]]["pen"])
+                else:
+                    option = option + " <<"
+            g.display.text(option, g.side_text_buffer, g.top_text_buffer + ((line+1) * row_height), g.screen_width, scale = defaults["font_scale"])
             line += 1
             
         if button_x.read():
@@ -186,9 +199,9 @@ def run_menu():
                 shift += 1
 
         g.display.update()
+        scroll_counter += 1
         time.sleep(0.1)
         # print("Free RAM: ",free(True))
-
 
 if __name__ == "__main__":
     run_menu()
