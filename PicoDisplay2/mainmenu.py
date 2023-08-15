@@ -1,11 +1,9 @@
-import time
 from pimoroni import Button
 from pimoroni import RGBLED
 from picographics import PicoGraphics, DISPLAY_PICO_DISPLAY_2, PEN_P4
-from neopixel import NeoPixel
 import gc
+import time
 from machine import Pin
-import math
 
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
@@ -22,27 +20,10 @@ CYAN = (0, 255, 255)
 BROWN = (165, 42, 42)
 
 class g:
-    current_screen = 0 # splash
-    current_player = 0 # pause
-    active_player = 0 # used to capture when a player changes
     display = None
-    neopixel_pin = 2
-    neopixel_strip = None
-    neopixel_brightness = 0.1
-    screen_brightness = 0.7
     led = None
     screen_width = 0
     screen_height = 0
-    brightness = 0.1
-    led_count = 7
-    line = 1 
-    row_selected = 0
-    shift = 0
-    list_length = 0
-    total_lines = 6
-    page = 2 # 0 splash, 1 settings, 2 game, 3 score
-    page_old = 2
-    player_count = 1
     top_text_buffer = 5
     side_text_buffer = 5
         
@@ -53,10 +34,9 @@ button_x = Button(14)
 button_y = Button(15)
 button_next = Button(18, Pin.IN, Pin.PULL_UP)
 g.led = RGBLED(6, 7, 8)
-# pin GP02 on neopixel
 # waveshare ups gp6,7 
 # open? 0,1,3,4,5,9,10,11,22,26,27,28 
-# button GP16-21 g.display
+# button GP16-21 g.display = picodisplay2
 
 def free(full=False):
     gc.collect()
@@ -77,7 +57,7 @@ def set_brightness(color):
 
 def run_menu():
     # read json file into menu_system
-    g.display = PicoGraphics(display=DISPLAY_PICO_DISPLAY_2 ,pen_type=PEN_P4) #rotate= 90
+    g.display = PicoGraphics(display=DISPLAY_PICO_DISPLAY_2 ,pen_type=PEN_P4) #, rotate= 90 test
     g.display.set_font("bitmap8")
     g.display.set_backlight(0.7)
     g.led.set_rgb(0, 0, 0)
@@ -151,13 +131,14 @@ def run_menu():
         current_menu = menu_system[menu_system["current_menu"]]
         g.display.set_pen(colors[defaults["bg_color"]]["pen"])
         g.display.clear()
-        title_height =  int(g.screen_height / (1 + defaults["option_lines"]) * 1) # maybe x row height like 2 for the title box?
+        
+        title_height =  int(g.screen_height / (1 + defaults["option_lines"]) * 1)
         option_height = g.screen_height - title_height
+        # draw rectangle for title and title
         g.display.set_pen(colors[defaults["title_bg_color"]]["pen"])
         g.display.rectangle(0, 0, g.screen_width, int(title_height))
         g.display.set_pen(colors[defaults["title_fg_color"]]["pen"])
-        # check if len of text is greater than 1 line, then every second, 
-        # subtract 1 from the start of the line, when it is 0 start over again?
+        # scroll title if too long
         title_width = g.display.measure_text(current_menu["text"], defaults["font_scale"])
         scroll_title_width = g.display.measure_text(scroll_title, defaults["font_scale"])
         print("title width: ", title_width)
