@@ -77,19 +77,23 @@ def run_menu():
                     "Splash": {"type": "menu",
                                 "text": "Welcome to the game there is more text here to test the scroll function", 
                                 "options": ["Settings", "Start", "Exit","Test","Test2","test3","test4"],
-                                "value": "Settings"},
+                                "value": "Settings",
+                                "menu_parent": "Splash"},
                     "Settings": {"type": "menu",
                                 "text": "Select Setting",
                                 "options": ["Players", "Brightness"],
-                                "value": "Players"},
+                                "value": "Players",
+                                "menu_parent": "Splash"},
                     "Players": {"type": "option",
                                 "text": "Number of Players?",
                                 "options": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"],
-                                "value": "2"},
+                                "value": "4",
+                                "menu_parent": "Settings"},
                     "Brightness": {"type": "option",
                                     "text": "Screen Brightness?",
-                                    "options": [0.2, 0.4, 0.6, 0.8, 1.0],
-                                    "value": 0.6},
+                                    "options": ["0.2", "0.4", "0.6", "0.8", "1.0"],
+                                    "value": "0.6",
+                                    "menu_parent": "Settings"},
                     "P1_Color": {"type": "option", # better way?
                                 "text": "Player 1 Color?",
                                 "options": ["Red", "Yellow", "Green", "Blue", "Black", "White", "Purple", "Pink", "Lime", "Orange", "Grey", "Cyan", "Brown"]},
@@ -111,6 +115,7 @@ def run_menu():
 
     shift = 0
     scroll_counter = 0
+    pauser = 0
     scroll_title = ""
 
     while True:
@@ -132,16 +137,20 @@ def run_menu():
         print("scroll title width: ", scroll_title_width)
         if scroll_title_width < screen_width:
             scroll_title = " " + current_menu["text"]
+            if pauser:
+                time.sleep(1)  # pause at the start of the scroll, this is end of the scroll
         else:
             if scroll_counter % 2 == 0:
                 scroll_title = scroll_title[1:]
+                pauser = 1
         g.display.text(scroll_title, defaults["side_text_buffer"], defaults["top_text_buffer"], 100_000, scale = defaults["font_scale"]) 
         
         line = 0
+        shift = current_menu["options"].index(current_menu["value"])   # check where in the list the option is and shift the list to display it
         display_options = current_menu["options"][shift:shift+defaults["option_lines"]]
         row_height = int(option_height / defaults["option_lines"])
         
-        for i, option in enumerate(display_options):
+        for _, option in enumerate(display_options):
             g.display.set_pen(colors[defaults["fg_color"]]["pen"])
             if (option == current_menu["value"]): # make it blink
                 if (option != current_menu["options"][0]):
@@ -154,6 +163,16 @@ def run_menu():
                     option = option + " <<"
             g.display.text(option, defaults["side_text_buffer"], defaults["top_text_buffer"] + ((line+1) * row_height), screen_width, scale = defaults["font_scale"])
             line += 1
+            
+        if button_a.read():
+            if current_menu["type"] == "menu":
+                menu_system["current_menu"] = current_menu["value"]
+                menu_system["current_value"] = menu_system[menu_system["current_menu"]]["value"]
+            # menu_system["current_option"] = menu_system[menu_system["current_menu"]]["options"][0]
+        
+        if button_b.read():
+            menu_system["current_menu"] = current_menu["menu_parent"]
+            menu_system["current_option"] = menu_system[menu_system["current_menu"]]["options"][0]
             
         if button_x.read():
             if current_menu["options"][0] != current_menu["value"]:
