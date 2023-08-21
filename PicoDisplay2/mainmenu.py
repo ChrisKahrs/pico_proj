@@ -29,10 +29,7 @@ button_a = Button(12)
 button_b = Button(13)
 button_x = Button(14)
 button_y = Button(15)
-button_next = Button(18, Pin.IN, Pin.PULL_UP)
 g.led = RGBLED(6, 7, 8)
-# waveshare ups gp6,7 
-# open? 0,1,3,4,5,9,10,11,22,26,27,28 
 # button GP16-21 g.display = picodisplay2
 
 def free(full=False):
@@ -137,7 +134,7 @@ def run_menu():
         print("title width: ", title_width)
         print("scroll title width: ", scroll_title_width)
         if scroll_title_width < screen_width:
-            scroll_title = " " + current_menu["text"]
+            scroll_title = " " + current_menu["text"]  # maybe ... and then start over by appending to the end
             if pauser:
                 time.sleep(1)  # pause at the start of the scroll, this is end of the scroll
         else:
