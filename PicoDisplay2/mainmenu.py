@@ -2,6 +2,7 @@ from pimoroni import Button, RGBLED
 from picographics import PicoGraphics, DISPLAY_PICO_DISPLAY_2, PEN_P4
 import gc
 import time
+import json
 from machine import Pin
 
 BLACK = (0, 0, 0)
@@ -168,7 +169,14 @@ def run_menu():
             if current_menu["type"] == "menu":
                 menu_system["current_menu"] = current_menu["value"]
                 menu_system["current_value"] = menu_system[menu_system["current_menu"]]["value"]
-            # menu_system["current_option"] = menu_system[menu_system["current_menu"]]["options"][0]
+                # on main settings, write to file and "read saved settings" file
+                menu_system_string = json.dumps(menu_system)
+                with open("menu_system.json", "w") as f:
+                    f.write(menu_system_string)
+                    
+            elif current_menu["type"] == "option":
+                menu_system["current_menu"] = current_menu["menu_parent"]
+                menu_system["current_option"] = menu_system[menu_system["current_menu"]]["options"][0]
         
         if button_b.read():
             menu_system["current_menu"] = current_menu["menu_parent"]
