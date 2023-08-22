@@ -3,6 +3,7 @@ from picographics import PicoGraphics, DISPLAY_PICO_DISPLAY_2, PEN_P4
 import gc
 import time
 import json
+import os
 from machine import Pin
 
 BLACK = (0, 0, 0)
@@ -51,12 +52,13 @@ def set_brightness(color):
 
 def run_menu():
     # read json file into menu_system
-    g.display = PicoGraphics(display=DISPLAY_PICO_DISPLAY_2 ,pen_type=PEN_P4) #, rotate= 90 test
-    g.display.set_font("bitmap8")
-    g.display.set_backlight(g.brightness)
-    g.led.set_rgb(0, 0, 0)
-    screen_width, screen_height = g.display.get_bounds()
-    menu_system = {"defaults": {"bg_color": "black",
+    if (os.stat("menu_system.json")[6] != 0):
+        print("Loading menu_system.json")
+        with open("menu_system.json") as fp:
+	        menu_system = json.load(fp)
+    else:
+        print("Loading default menu_system.json")
+        menu_system = {"defaults": {"bg_color": "black",
                                 "fg_color": "white",
                                 "alt_fg_color": "black",
                                 "alt_bg_color": "orange",
@@ -94,9 +96,18 @@ def run_menu():
                                     "menu_parent": "Settings"},
                     "P1_Color": {"type": "option", # better way?
                                 "text": "Player 1 Color?",
-                                "options": ["Red", "Yellow", "Green", "Blue", "Black", "White", "Purple", "Pink", "Lime", "Orange", "Grey", "Cyan", "Brown"]},
+                                "options": ["None","Red", "Yellow", "Green", "Blue", "Black", "White", "Purple", "Pink", "Lime", "Orange", "Grey", "Cyan", "Brown"],
+                                "value": "None"}
                                 #seat setup, light configuation, etc
-    }
+                }
+
+    menu_system_string = json.dumps(menu_system)
+    g.display = PicoGraphics(display=DISPLAY_PICO_DISPLAY_2 ,pen_type=PEN_P4) #, rotate= 90 test
+    g.display.set_font("bitmap8")
+    g.display.set_backlight(g.brightness)
+    g.led.set_rgb(0, 0, 0)
+    screen_width, screen_height = g.display.get_bounds()
+    
     colors = {"red" :{"rgb": RED, "pen":g.display.create_pen(*RED) },
             "yellow" :{"rgb": YELLOW, "pen":g.display.create_pen(*YELLOW)},
             "green" :{"rgb": GREEN, "pen":g.display.create_pen(*GREEN)},
@@ -174,6 +185,9 @@ def run_menu():
             elif current_menu["type"] == "option":
                 menu_system["current_menu"] = current_menu["menu_parent"]
                 menu_system["current_option"] = menu_system[menu_system["current_menu"]]["options"][0]
+                menu_system_string = json.dumps(menu_system)
+                with open("menu_system.json", "w") as f:
+                    f.write(menu_system_string)
         
         if button_b.read():
             menu_system["current_menu"] = current_menu["menu_parent"]
