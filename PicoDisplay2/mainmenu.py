@@ -23,7 +23,6 @@ BROWN = (165, 42, 42)
 class g: # globals for display parts
     display = None
     led = None
-    brightness = 0.5
         
 # pin layouts
 button_a = Button(12)
@@ -53,11 +52,9 @@ def set_brightness(color):
 def run_menu():
     # read json file into menu_system
     if (os.stat("menu_system.json")[6] != 0):
-        print("Loading menu_system.json")
         with open("menu_system.json") as fp:
 	        menu_system = json.load(fp)
     else:
-        print("Loading default menu_system.json")
         menu_system = {"defaults": {"bg_color": "black",
                                 "fg_color": "white",
                                 "alt_fg_color": "black",
@@ -97,14 +94,12 @@ def run_menu():
                     "P1_Color": {"type": "option", # better way?
                                 "text": "Player 1 Color?",
                                 "options": ["None","Red", "Yellow", "Green", "Blue", "Black", "White", "Purple", "Pink", "Lime", "Orange", "Grey", "Cyan", "Brown"],
-                                "value": "None"}
+                                "value": "None"}}
                                 #seat setup, light configuation, etc
-                }
 
-    menu_system_string = json.dumps(menu_system)
     g.display = PicoGraphics(display=DISPLAY_PICO_DISPLAY_2 ,pen_type=PEN_P4) #, rotate= 90 test
-    g.display.set_font("bitmap8")
-    g.display.set_backlight(g.brightness)
+    g.display.set_font(menu_system["defaults"]["font"])
+    g.display.set_backlight(menu_system["Brightness"]["value"])
     g.led.set_rgb(0, 0, 0)
     screen_width, screen_height = g.display.get_bounds()
     
@@ -124,7 +119,6 @@ def run_menu():
 
     shift = 0
     scroll_counter = 0
-    pauser = 0
     scroll_title = ""
 
     while True:
@@ -135,23 +129,18 @@ def run_menu():
         
         title_height =  int(screen_height / (1 + defaults["option_lines"]) * 1)
         option_height = screen_height - title_height
-        # draw rectangle for title and title
+        # draw rectangle for title
         g.display.set_pen(colors[defaults["title_bg_color"]]["pen"])
         g.display.rectangle(0, 0, screen_width, int(title_height))
         g.display.set_pen(colors[defaults["title_fg_color"]]["pen"])
         # scroll title if too long
         title_width = g.display.measure_text(current_menu["text"], defaults["font_scale"])
         scroll_title_width = g.display.measure_text(scroll_title, defaults["font_scale"])
-        print("title width: ", title_width)
-        print("scroll title width: ", scroll_title_width)
         if scroll_title_width < screen_width:
-            scroll_title = " " + current_menu["text"]  # maybe ... and then start over by appending to the end
-            if pauser:
-                time.sleep(1)  # pause at the start of the scroll, this is end of the scroll
+            scroll_title = "        " + current_menu["text"]  # maybe ... and then start over by appending to the end
         else:
             if scroll_counter % 2 == 0:
                 scroll_title = scroll_title[1:]
-                pauser = 1
         g.display.text(scroll_title, defaults["side_text_buffer"], defaults["top_text_buffer"], 100_000, scale = defaults["font_scale"]) 
         
         line = 0
@@ -174,20 +163,17 @@ def run_menu():
             line += 1
             
         if button_a.read():
+            g.led.set_rgb(*GREEN)
             if current_menu["type"] == "menu":
                 menu_system["current_menu"] = current_menu["value"]
                 menu_system["current_value"] = menu_system[menu_system["current_menu"]]["value"]
-                # on main settings, write to file and "read saved settings" file
-                menu_system_string = json.dumps(menu_system)
-                with open("menu_system.json", "w") as f:
-                    f.write(menu_system_string)
-                    
             elif current_menu["type"] == "option":
                 menu_system["current_menu"] = current_menu["menu_parent"]
                 menu_system["current_option"] = menu_system[menu_system["current_menu"]]["options"][0]
-                menu_system_string = json.dumps(menu_system)
-                with open("menu_system.json", "w") as f:
-                    f.write(menu_system_string)
+            menu_system_string = json.dumps(menu_system)
+            with open("menu_system.json", "w") as f:
+                f.write(menu_system_string)
+            g.led.set_rgb(*BLACK)
         
         if button_b.read():
             menu_system["current_menu"] = current_menu["menu_parent"]
