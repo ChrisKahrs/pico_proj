@@ -23,6 +23,7 @@ BROWN = (165, 42, 42)
 class g: # globals for display parts
     display = None
     led = None
+    brightness = 0.6
         
 # pin layouts
 button_a = Button(12)
@@ -99,7 +100,7 @@ def run_menu():
 
     g.display = PicoGraphics(display=DISPLAY_PICO_DISPLAY_2 ,pen_type=PEN_P4) #, rotate= 90 test
     g.display.set_font(menu_system["defaults"]["font"])
-    g.display.set_backlight(menu_system["Brightness"]["value"])
+    g.display.set_backlight(float(menu_system["Brightness"]["value"]))
     g.led.set_rgb(0, 0, 0)
     screen_width, screen_height = g.display.get_bounds()
     
